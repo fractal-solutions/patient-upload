@@ -208,6 +208,71 @@
       color: white;
     }
 
+    .loading {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .loading.show {
+      display: flex;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid var(--bg);
+      border-top: 5px solid var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    .response-dialog {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .response-dialog.show {
+      display: flex;
+    }
+
+    .response-content {
+      background: var(--bg);
+      backdrop-filter: blur(var(--blur));
+      border-radius: var(--radius);
+      box-shadow: 0 8px 32px var(--shadow);
+      padding: 24px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .response-content button {
+      margin-top: 16px;
+      width: auto;
+      min-width: 120px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
     @keyframes fadeIn {
       from {opacity: 0; transform: translateY(10px);}
       to {opacity: 1; transform: translateY(0);}
@@ -257,6 +322,17 @@
     </div>
   </div>
 
+  <div class="loading" id="loadingSpinner">
+    <div class="spinner"></div>
+  </div>
+
+  <div class="response-dialog" id="responseDialog">
+    <div class="response-content">
+      <div id="dialogMessage"></div>
+      <button type="button" id="closeDialog">Close</button>
+    </div>
+  </div>
+
   <script>
     const form = document.getElementById("patientForm");
     const fileInput = document.getElementById("file");
@@ -272,6 +348,12 @@
     const apiUrlInput = document.getElementById("apiUrl");
     const saveSettingsBtn = document.getElementById("saveSettings");
     const cancelSettingsBtn = document.getElementById("cancelSettings");
+
+    // Loading and response dialog elements
+    const loadingSpinner = document.getElementById("loadingSpinner");
+    const responseDialog = document.getElementById("responseDialog");
+    const dialogMessage = document.getElementById("dialogMessage");
+    const closeDialog = document.getElementById("closeDialog");
 
     // Default API URL
     let apiUrl = "https://n8n.fractal.co.ke/webhook-test/scan";
@@ -332,15 +414,22 @@
     fileInput.addEventListener("change", handleFileSelect);
     cameraInput.addEventListener("change", handleFileSelect);
 
+    closeDialog.addEventListener("click", () => {
+      responseDialog.classList.remove("show");
+    });
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       if (selectedFiles.length === 0) {
-        responseMsg.className = "message error";
-        responseMsg.textContent = "❌ Please select at least one file.";
+        dialogMessage.className = "error";
+        dialogMessage.textContent = "❌ Please select at least one file.";
+        responseDialog.classList.add("show");
         return;
       }
 
-      responseMsg.textContent = "";
+      // Show loading spinner
+      loadingSpinner.classList.add("show");
+      
       const data = new FormData();
       
       // Add form fields
@@ -364,12 +453,12 @@
           try {
             // Try to parse as JSON first
             const jsonResponse = JSON.parse(responseData);
-            responseMsg.className = "message success";
-            responseMsg.textContent = `✅ ${jsonResponse.message || JSON.stringify(jsonResponse)}`;
+            dialogMessage.className = "success";
+            dialogMessage.textContent = `✅ ${jsonResponse.message || JSON.stringify(jsonResponse)}`;
           } catch {
             // If not JSON, display as text
-            responseMsg.className = "message success";
-            responseMsg.textContent = `✅ ${responseData}`;
+            dialogMessage.className = "success";
+            dialogMessage.textContent = `✅ ${responseData}`;
           }
           form.reset();
           selectedFiles = [];
@@ -379,17 +468,21 @@
           try {
             // Try to parse error as JSON
             const jsonError = JSON.parse(errorData);
-            responseMsg.className = "message error";
-            responseMsg.textContent = `❌ ${jsonError.message || jsonError.error || JSON.stringify(jsonError)}`;
+            dialogMessage.className = "error";
+            dialogMessage.textContent = `❌ ${jsonError.message || jsonError.error || JSON.stringify(jsonError)}`;
           } catch {
             // If not JSON, display as text
-            responseMsg.className = "message error";
-            responseMsg.textContent = `❌ ${errorData || 'Submission failed'}`;
+            dialogMessage.className = "error";
+            dialogMessage.textContent = `❌ ${errorData || 'Submission failed'}`;
           }
         }
       } catch (err) {
-        responseMsg.className = "message error";
-        responseMsg.textContent = `⚠️ ${err.message || 'Network error'}`;
+        dialogMessage.className = "error";
+        dialogMessage.textContent = `⚠️ ${err.message || 'Network error'}`;
+      } finally {
+        // Hide loading spinner and show response dialog
+        loadingSpinner.classList.remove("show");
+        responseDialog.classList.add("show");
       }
     });
   </script>
