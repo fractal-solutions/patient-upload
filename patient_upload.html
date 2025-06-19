@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quick Patient Upload</title>
+  <style>
+    :root {
+      --accent: #3f85f7;
+      --bg: rgba(255, 255, 255, 0.15);
+      --blur: 20px;
+      --radius: 16px;
+      --shadow: rgba(0, 0, 0, 0.2);
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to top right, #1e3c72, #2a5298);
+      font-family: "Inter", sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    .card {
+      background: var(--bg);
+      backdrop-filter: blur(var(--blur));
+      border-radius: var(--radius);
+      box-shadow: 0 8px 32px var(--shadow);
+      padding: 30px 24px;
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeIn 0.6s ease-in;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 4px;
+      font-size: 1.6rem;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .row input {
+      flex: 1;
+    }
+
+    input, button {
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    input::placeholder {
+      color: #ddd;
+    }
+
+    input[type="file"] {
+      padding: 8px;
+      background: none;
+      color: #fff;
+    }
+
+    button {
+      background-color: var(--accent);
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    button:hover {
+      background-color: #2563eb;
+    }
+
+    .preview {
+      margin-top: 6px;
+      border-radius: 12px;
+      overflow: auto;
+      background: rgba(255, 255, 255, 0.1);
+      max-height: 300px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .preview .preview-item {
+      width: calc(50% - 5px);
+      position: relative;
+      aspect-ratio: 1;
+    }
+
+    .preview .preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .preview .preview-item .remove-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: rgba(0, 0, 0, 0.5);
+      border: none;
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 12px;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .settings-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg);
+      backdrop-filter: blur(var(--blur));
+      border-radius: var(--radius);
+      box-shadow: 0 8px 32px var(--shadow);
+      padding: 24px;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    .modal h3 {
+      margin-top: 0;
+    }
+
+    .upload-options {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .upload-options button {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .message {
+      text-align: center;
+      font-size: 0.95rem;
+      margin-top: 8px;
+      padding: 8px;
+      border-radius: 8px;
+    }
+
+    .success {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    .error {
+      background-color: #f44336;
+      color: white;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(10px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
+    @media (max-width: 480px) {
+      .row {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button class="settings-btn" id="settingsBtn">⚙️</button>
+
+  <form class="card" id="patientForm">
+    <h2>Quick Patient Upload</h2>
+
+    <div class="row">
+      <input type="text" id="fileNumber" name="fileNumber" placeholder="File #" required>
+      <input type="text" id="name" name="name" placeholder="Full Name" required>
+    </div>
+
+    <input type="tel" id="phone" name="phone" placeholder="Phone Number" required>
+
+    <div class="upload-options">
+      <button type="button" id="pickFiles">📁 Choose Files</button>
+      <button type="button" id="takePhoto">📸 Take Photo</button>
+    </div>
+    <input type="file" id="file" name="files" accept="image/*" multiple hidden>
+    <input type="file" id="camera" name="camera" accept="image/*" capture="environment" hidden>
+
+    <div class="preview" id="filePreview"></div>
+
+    <button type="submit">📤 Submit</button>
+    <div id="responseMsg" class="message"></div>
+  </form>
+
+  <div class="modal" id="settingsModal">
+    <div class="modal-content">
+      <h3>Settings</h3>
+      <input type="text" id="apiUrl" placeholder="API Submission URL" style="margin-bottom: 16px;">
+      <div class="row">
+        <button type="button" id="saveSettings">Save</button>
+        <button type="button" id="cancelSettings" style="background: rgba(255,255,255,0.2);">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("patientForm");
+    const fileInput = document.getElementById("file");
+    const cameraInput = document.getElementById("camera");
+    const preview = document.getElementById("filePreview");
+    const responseMsg = document.getElementById("responseMsg");
+    const pickFilesBtn = document.getElementById("pickFiles");
+    const takePhotoBtn = document.getElementById("takePhoto");
+    
+    // Settings related elements
+    const settingsBtn = document.getElementById("settingsBtn");
+    const settingsModal = document.getElementById("settingsModal");
+    const apiUrlInput = document.getElementById("apiUrl");
+    const saveSettingsBtn = document.getElementById("saveSettings");
+    const cancelSettingsBtn = document.getElementById("cancelSettings");
+
+    // Default API URL
+    let apiUrl = "https://n8n.fractal.co.ke/webhook-test/scan";
+    
+    // Load saved API URL if exists
+    if (localStorage.getItem("apiUrl")) {
+      apiUrl = localStorage.getItem("apiUrl");
+      apiUrlInput.value = apiUrl;
+    }
+
+    // Settings modal handlers
+    settingsBtn.addEventListener("click", () => {
+      settingsModal.classList.add("show");
+      apiUrlInput.value = apiUrl;
+    });
+
+    saveSettingsBtn.addEventListener("click", () => {
+      apiUrl = apiUrlInput.value;
+      localStorage.setItem("apiUrl", apiUrl);
+      settingsModal.classList.remove("show");
+    });
+
+    cancelSettingsBtn.addEventListener("click", () => {
+      settingsModal.classList.remove("show");
+    });
+
+    // Handle file selection buttons
+    pickFilesBtn.addEventListener("click", () => fileInput.click());
+    takePhotoBtn.addEventListener("click", () => cameraInput.click());
+
+    // Store selected files
+    let selectedFiles = [];
+
+    function updatePreview() {
+      preview.innerHTML = selectedFiles.map((file, index) => `
+        <div class="preview-item">
+          <img src="${URL.createObjectURL(file)}" alt="preview" />
+          <button type="button" class="remove-btn" data-index="${index}">×</button>
+        </div>
+      `).join("");
+
+      // Add remove button handlers
+      preview.querySelectorAll(".remove-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          selectedFiles.splice(parseInt(btn.dataset.index), 1);
+          updatePreview();
+        });
+      });
+    }
+
+    function handleFileSelect(event) {
+      const files = Array.from(event.target.files);
+      selectedFiles = [...selectedFiles, ...files];
+      updatePreview();
+      event.target.value = ""; // Reset input to allow selecting same file again
+    }
+
+    fileInput.addEventListener("change", handleFileSelect);
+    cameraInput.addEventListener("change", handleFileSelect);
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (selectedFiles.length === 0) {
+        responseMsg.className = "message error";
+        responseMsg.textContent = "❌ Please select at least one file.";
+        return;
+      }
+
+      responseMsg.textContent = "";
+      const data = new FormData();
+      
+      // Add form fields
+      data.append("fileNumber", form.fileNumber.value);
+      data.append("name", form.name.value);
+      data.append("phone", form.phone.value);
+      
+      // Add all selected files
+      selectedFiles.forEach((file, index) => {
+        data.append(`file${index}`, file);
+      });
+
+      try {
+        const res = await fetch(apiUrl, {
+          method: "POST",
+          body: data
+        });
+
+        if (res.ok) {
+          responseMsg.className = "message success";
+          responseMsg.textContent = "✅ Files submitted successfully!";
+          form.reset();
+          selectedFiles = [];
+          preview.innerHTML = "";
+        } else {
+          responseMsg.className = "message error";
+          responseMsg.textContent = "❌ Submission failed.";
+        }
+      } catch (err) {
+        responseMsg.className = "message error";
+        responseMsg.textContent = "⚠️ Network error.";
+      }
+    });
+  </script>
+</body>
+</html>
