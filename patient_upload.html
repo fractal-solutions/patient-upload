@@ -360,18 +360,36 @@
         });
 
         if (res.ok) {
-          responseMsg.className = "message success";
-          responseMsg.textContent = "✅ Files submitted successfully!";
+          const responseData = await res.text();
+          try {
+            // Try to parse as JSON first
+            const jsonResponse = JSON.parse(responseData);
+            responseMsg.className = "message success";
+            responseMsg.textContent = `✅ ${jsonResponse.message || JSON.stringify(jsonResponse)}`;
+          } catch {
+            // If not JSON, display as text
+            responseMsg.className = "message success";
+            responseMsg.textContent = `✅ ${responseData}`;
+          }
           form.reset();
           selectedFiles = [];
           preview.innerHTML = "";
         } else {
-          responseMsg.className = "message error";
-          responseMsg.textContent = "❌ Submission failed.";
+          const errorData = await res.text();
+          try {
+            // Try to parse error as JSON
+            const jsonError = JSON.parse(errorData);
+            responseMsg.className = "message error";
+            responseMsg.textContent = `❌ ${jsonError.message || jsonError.error || JSON.stringify(jsonError)}`;
+          } catch {
+            // If not JSON, display as text
+            responseMsg.className = "message error";
+            responseMsg.textContent = `❌ ${errorData || 'Submission failed'}`;
+          }
         }
       } catch (err) {
         responseMsg.className = "message error";
-        responseMsg.textContent = "⚠️ Network error.";
+        responseMsg.textContent = `⚠️ ${err.message || 'Network error'}`;
       }
     });
   </script>
