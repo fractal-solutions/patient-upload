@@ -370,6 +370,7 @@
     <div class="modal-content">
       <h3>Settings</h3>
       <input type="text" id="apiUrl" placeholder="API Submission URL" style="margin-bottom: 16px;">
+      <input type="text" id="dbUrl" placeholder="Database Save Endpoint" style="margin-bottom: 16px;">
       <div class="row">
         <button type="button" id="saveSettings">Save</button>
         <button type="button" id="cancelSettings" style="background: rgba(255,255,255,0.2);">Cancel</button>
@@ -384,7 +385,10 @@
   <div class="response-dialog" id="responseDialog">
     <div class="response-content">
       <div id="dialogMessage"></div>
-      <button type="button" id="closeDialog">Close</button>
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button type="button" id="saveDialog" style="background: #4caf50; color: #fff; font-weight: bold;">Save</button>
+        <button type="button" id="closeDialog">Close</button>
+      </div>
     </div>
   </div>
 
@@ -401,6 +405,7 @@
     const settingsBtn = document.getElementById("settingsBtn");
     const settingsModal = document.getElementById("settingsModal");
     const apiUrlInput = document.getElementById("apiUrl");
+    const dbUrlInput = document.getElementById("dbUrl");
     const saveSettingsBtn = document.getElementById("saveSettings");
     const cancelSettingsBtn = document.getElementById("cancelSettings");
 
@@ -423,11 +428,13 @@
     settingsBtn.addEventListener("click", () => {
       settingsModal.classList.add("show");
       apiUrlInput.value = apiUrl;
+      dbUrlInput.value = localStorage.getItem("dbUrl") || "";
     });
 
     saveSettingsBtn.addEventListener("click", () => {
       apiUrl = apiUrlInput.value;
       localStorage.setItem("apiUrl", apiUrl);
+      localStorage.setItem("dbUrl", dbUrlInput.value);
       settingsModal.classList.remove("show");
     });
 
