@@ -414,6 +414,7 @@
     const responseDialog = document.getElementById("responseDialog");
     const dialogMessage = document.getElementById("dialogMessage");
     const closeDialog = document.getElementById("closeDialog");
+    const saveDialog = document.getElementById("saveDialog");
 
     // Default API URL
     let apiUrl = "https://n8n.fractal.co.ke/webhook-test/scan";
@@ -480,7 +481,10 @@
       responseDialog.classList.remove("show");
     });
 
+    let lastResponseData = null; // Store last parsed response
+
     function formatResponse(data) {
+      lastResponseData = data; // Save for later use
       const { name, age, sex, phone, fileNumber, date, medicalHistory, doctorsNotes, procedures } = data;
       const history = medicalHistory[0];
       const notes = doctorsNotes[0];
@@ -587,6 +591,41 @@
         // Hide loading spinner and show response dialog
         loadingSpinner.classList.remove("show");
         responseDialog.classList.add("show");
+      }
+    });
+
+    saveDialog.addEventListener("click", async () => {
+      const dbUrl = localStorage.getItem("dbUrl");
+      if (!dbUrl) {
+        dialogMessage.className = "error";
+        dialogMessage.textContent = "❌ No database endpoint set in settings.";
+        return;
+      }
+      if (!lastResponseData) {
+        dialogMessage.className = "error";
+        dialogMessage.textContent = "❌ No response data to save.";
+        return;
+      }
+      try {
+        loadingSpinner.classList.add("show");
+        const res = await fetch(dbUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(lastResponseData)
+        });
+        if (res.ok) {
+          dialogMessage.className = "success";
+          dialogMessage.textContent = "✅ Saved to database!";
+        } else {
+          const errorText = await res.text();
+          dialogMessage.className = "error";
+          dialogMessage.textContent = `❌ Save failed: ${errorText}`;
+        }
+      } catch (err) {
+        dialogMessage.className = "error";
+        dialogMessage.textContent = `⚠️ ${err.message || 'Network error'}`;
+      } finally {
+        loadingSpinner.classList.remove("show");
       }
     });
   </script>
